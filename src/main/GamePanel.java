@@ -1,5 +1,8 @@
 package main;
 
+import entity.Player;
+import entity.Tree;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -12,22 +15,18 @@ public class GamePanel extends JPanel implements Runnable{
     int screenWidth = maxWidth * scale;
     int screenHeight = maxHeight * scale;
 
-    String targetFPS = "unlimited";
+    String targetFPS = "240";
     float FPS = 0;
 
-    long currentTime;
-    double delta = 0;
-    long lastTime = System.nanoTime();
-    double refreshTime = 0;
+
+    public double refreshTime = 0;
     double FPSInterval;
     ArrayList<Long> frames = new ArrayList<>();
 
     KeyHandler keyH = new KeyHandler();
     Thread gameThread;
-
-        double playerX = 100;
-        double playerY = 100;
-        double playerSpeed = 100;
+    Player player = new Player(this,keyH);
+    Tree tree = new Tree();
 
     public GamePanel() {
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
@@ -42,7 +41,7 @@ public class GamePanel extends JPanel implements Runnable{
         gameThread.start();
     }
 
-    public void calculateFPS() {
+    public void calculateFPS(long currentTime) {
         for (int i = frames.size() - 1; i >= 0; i--) {
             if (currentTime - frames.get(i) >= 1000000000) {
                 frames.remove(i);
@@ -52,52 +51,48 @@ public class GamePanel extends JPanel implements Runnable{
     }
     @Override
     public void run() {
+        long currentTime;
+        long lastTime = System.nanoTime();
+        long lastDrawnTime = System.nanoTime();
+        double delta = 0;
         while(gameThread != null) {
             if (Objects.equals(targetFPS, "unlimited")) {
                 currentTime = System.nanoTime();
                 refreshTime = (double)(currentTime - lastTime) / 1000000000;
-                lastTime = currentTime;
                 frames.add(currentTime);
-                calculateFPS();
+                calculateFPS(currentTime);
                 update();
                 repaint();
+                lastTime = currentTime;
             } else {
                 FPSInterval = 1000000000 / Double.parseDouble(targetFPS);
                 currentTime = System.nanoTime();
-
                 delta += (currentTime - lastTime) / FPSInterval;
-                lastTime = currentTime;
                 if (delta >= 1) {
+                    refreshTime = (double)(currentTime - lastDrawnTime) / 1000000000;
                     frames.add(currentTime);
-                    calculateFPS();
+                    calculateFPS(currentTime);
                     update();
                     repaint();
                     delta--;
+                    lastDrawnTime = currentTime;
                 }
-
+                lastTime = currentTime;
             }
 
         }
     }
     public void update() {
-        if (keyH.wPressed) {
-            playerY -= playerSpeed * refreshTime;
-        }
-        if (keyH.sPressed) {
-            playerY += playerSpeed * refreshTime;
-        }
-        if (keyH.aPressed) {
-            playerX -= playerSpeed * refreshTime;
-        }
-        if (keyH.dPressed) {
-            playerX += playerSpeed * refreshTime;
-        }
+        player.update();
     }
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D)g;
+        g2.setColor(new Color(120,200,10));
+        g2.fillRect(0, 0, screenWidth, screenHeight);
+        player.draw(g2);
+        tree.draw(g2);
         g2.setColor(Color.white);
-        g2.fillRect((int)Math.round(playerX), (int)Math.round(playerY), 40, 40);
         g2.drawString(String.valueOf(FPS), 10, 10);
         g2.dispose();
     }
