@@ -1,5 +1,6 @@
 package main;
 
+import entity.Grass;
 import entity.Player;
 import entity.Tree;
 
@@ -7,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Random;
 
 public class GamePanel extends JPanel implements Runnable{
     int scale = 3;
@@ -14,26 +16,35 @@ public class GamePanel extends JPanel implements Runnable{
     final int maxHeight = 720;
     int screenWidth = maxWidth * scale;
     int screenHeight = maxHeight * scale;
+    long seed = 192837465;
+    Random random = new Random(seed);
 
-    String targetFPS = "240";
+    String targetFPS = "unlimited";
     float FPS = 0;
 
 
     public double refreshTime = 0;
     double FPSInterval;
     ArrayList<Long> frames = new ArrayList<>();
-
+    ArrayList<Grass> grasses = new ArrayList<>();
     KeyHandler keyH = new KeyHandler();
     Thread gameThread;
     Player player = new Player(this,keyH);
     Tree tree = new Tree();
 
+    public void generateGrass(int grassAmount) {
+        for (int i = 0; i < grassAmount; i++) {
+            Grass grass = new Grass(random.nextInt(screenWidth), random.nextInt(screenHeight));
+            grasses.add(grass);
+        }
+    }
     public GamePanel() {
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
         this.setBackground(Color.black);
         this.setDoubleBuffered(true); // buffer for better performance
         this.addKeyListener(keyH);
         this.setFocusable(true);
+        generateGrass(1000);
 
     }
     public void startGameThread() {
@@ -92,6 +103,9 @@ public class GamePanel extends JPanel implements Runnable{
         g2.fillRect(0, 0, screenWidth, screenHeight);
         player.draw(g2);
         tree.draw(g2);
+        for (Grass grass : grasses) {
+            grass.draw(g2);
+        }
         g2.setColor(Color.white);
         g2.drawString(String.valueOf(FPS), 10, 10);
         g2.dispose();

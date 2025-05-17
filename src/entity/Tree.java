@@ -9,6 +9,7 @@ public class Tree extends Entity{
     public void setDefualtValues() {
         x = 100;
         y = 100;
+        hasCollision = true;
     }
     public void draw(Graphics2D g2) {
         g2.setColor(new Color(126, 90, 60));

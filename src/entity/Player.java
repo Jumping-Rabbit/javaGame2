@@ -18,6 +18,7 @@ public class Player extends Entity{
         x = 100;
         y = 100;
         speed = 100;
+        hasCollision = true;
     }
     public void update() {
         if (keyH.wPressed) {
