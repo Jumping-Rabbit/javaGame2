@@ -19,7 +19,7 @@ public class GamePanel extends JPanel implements Runnable{
     long seed = 192837465;
     Random random = new Random(seed);
 
-    String targetFPS = "unlimited";
+    String targetFPS = "120";
     float FPS = 0;
 
 
