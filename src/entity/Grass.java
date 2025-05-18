@@ -10,6 +10,7 @@ public class Grass extends Entity{
         hasCollision = false;
         x = grassX;
         y = grassY;
+        System.out.println("hi");
     }
     public void draw(Graphics2D g2) {
         g2.setColor(new Color(124, 252, 0));

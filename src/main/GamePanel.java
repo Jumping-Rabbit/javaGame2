@@ -2,6 +2,7 @@ package main;
 
 import entity.Grass;
 import entity.Player;
+import entity.Rock;
 import entity.Tree;
 
 import javax.swing.*;
@@ -19,7 +20,7 @@ public class GamePanel extends JPanel implements Runnable{
     long seed = 192837465;
     Random random = new Random(seed);
 
-    String targetFPS = "120";
+    String targetFPS = "unlimited";
     float FPS = 0;
 
 
@@ -27,15 +28,24 @@ public class GamePanel extends JPanel implements Runnable{
     double FPSInterval;
     ArrayList<Long> frames = new ArrayList<>();
     ArrayList<Grass> grasses = new ArrayList<>();
+    ArrayList<Tree> trees = new ArrayList<>();
+    ArrayList<Rock> rocks = new ArrayList<>();
     KeyHandler keyH = new KeyHandler();
     Thread gameThread;
     Player player = new Player(this,keyH);
-    Tree tree = new Tree();
 
-    public void generateGrass(int grassAmount) {
+    public void generateObjects(int grassAmount, int treeAmount, int rockAmount) {
         for (int i = 0; i < grassAmount; i++) {
             Grass grass = new Grass(random.nextInt(screenWidth), random.nextInt(screenHeight));
             grasses.add(grass);
+        }
+        for (int i = 0; i < treeAmount; i++) {
+            Tree tree = new Tree(random.nextInt(screenWidth), random.nextInt(screenHeight));
+            trees.add(tree);
+        }
+        for (int i = 0; i < rockAmount; i++) {
+            Rock rock = new Rock(random.nextInt(screenWidth), random.nextInt(screenHeight));
+            rocks.add(rock);
         }
     }
     public GamePanel() {
@@ -44,7 +54,7 @@ public class GamePanel extends JPanel implements Runnable{
         this.setDoubleBuffered(true); // buffer for better performance
         this.addKeyListener(keyH);
         this.setFocusable(true);
-        generateGrass(1000);
+        generateObjects(1000, 100, 10);
 
     }
     public void startGameThread() {
@@ -95,16 +105,22 @@ public class GamePanel extends JPanel implements Runnable{
     }
     public void update() {
         player.update();
+        // do collision here
     }
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D)g;
         g2.setColor(new Color(120,200,10));
         g2.fillRect(0, 0, screenWidth, screenHeight);
-        player.draw(g2);
-        tree.draw(g2);
         for (Grass grass : grasses) {
             grass.draw(g2);
+        }
+        player.draw(g2);
+        for (Tree tree : trees) {
+            tree.draw(g2);
+        }
+        for (Rock rock : rocks) {
+            rock.draw(g2);
         }
         g2.setColor(Color.white);
         g2.drawString(String.valueOf(FPS), 10, 10);
