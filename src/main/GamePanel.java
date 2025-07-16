@@ -1,38 +1,39 @@
 package main;
 
-import entity.*;
-
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Objects;
 
-import static main.Game.Map.Objects.*;
+import static java.lang.Math.*;
 
-public class GamePanel extends JPanel implements Runnable{
-    int scale = 3;
-    final int cameraMaxWidth = 1280;
-    final int cameraMaxHeight = 720;
-    public int screenWidth = cameraMaxWidth * scale;
-    public int screenHeight = cameraMaxHeight * scale;
-    public int seed = 192837465;
 
-    String targetFPS = "unlimited";
-    float FPS = 0;
+public class GamePanel extends JPanel implements Runnable {
 
-    public double refreshTime = 0;
-    double FPSInterval;
+//    double targetFPS = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode().getRefreshRate(); // 0 or negative number means unlimited
+    double targetFPS = 0;
+
+    double fps = 0;
+    enum GameStatus {
+        TITLE,
+        SETTINGS,
+        GAME_RUNNING,
+        MAKING_NEW_GAME,
+        LOADING_NEW_GAME
+    }
+    GameStatus gameStatus = GameStatus.TITLE;
+
     ArrayList<Long> frames = new ArrayList<>();
 
-    KeyHandler keyH = new KeyHandler();
+    KeyHandler keyHandler = new KeyHandler();
+    MouseHandler mouseHandler = new MouseHandler();
     Thread gameThread;
-    Player player = new Player(this,keyH);
-    Game game = new Game();
+    GameData gameData;
+
     public GamePanel() {
-        this.setPreferredSize(new Dimension(screenWidth, screenHeight));
+        this.setPreferredSize(new Dimension((int)floor((Viewport.viewport.getWidth() * Viewport.viewport.getScale()) + Viewport.viewport.getXOffset()*2), (int)floor((Viewport.viewport.getHeight() * Viewport.viewport.getScale()) + Viewport.viewport.getYOffset()*2)));
         this.setBackground(Color.black);
         this.setDoubleBuffered(true); // buffer for better performance
-        this.addKeyListener(keyH);
+        this.addKeyListener(keyHandler);
         this.setFocusable(true);
     }
 
@@ -47,64 +48,58 @@ public class GamePanel extends JPanel implements Runnable{
                 frames.remove(i);
             }
         }
-        FPS = frames.size();
+        fps = frames.size();
+    }
+
+    void newGame() {
+         gameData = new GameData(123456, 10000000, 1000000, 20000, keyHandler, mouseHandler);
     }
 
     @Override
     public void run() {
-        System.out.println(grasses.size());
         long currentTime;
         long lastTime = System.nanoTime();
-        long lastDrawnTime = System.nanoTime();
-        double delta = 0;
-        while(gameThread != null) {
-            if (Objects.equals(targetFPS, "unlimited")) {
+        double targetFrameInterval = targetFPS > 0 ? 1000000000 / targetFPS : 0;
+
+        while (gameThread != null) {
+            if (targetFPS <= 0) {
                 currentTime = System.nanoTime();
-                refreshTime = (double)(currentTime - lastTime) / 1000000000;
+                double timePassedSec = (double) (currentTime - lastTime) / 1000000000;
                 frames.add(currentTime);
                 calculateFPS(currentTime);
-                update();
+                updateOnFrame(timePassedSec);
                 repaint();
                 lastTime = currentTime;
             } else {
-                FPSInterval = 1000000000 / Double.parseDouble(targetFPS);
                 currentTime = System.nanoTime();
-                delta += (currentTime - lastTime) / FPSInterval;
-                if (delta >= 1) {
-                    refreshTime = (double)(currentTime - lastDrawnTime) / 1000000000;
+                if (currentTime - lastTime >= targetFrameInterval) {
+                    double timePassedSec = (double) (currentTime - lastTime) / 1000000000;
                     frames.add(currentTime);
                     calculateFPS(currentTime);
-                    update();
+                    updateOnFrame(timePassedSec);
                     repaint();
-                    delta--;
-                    lastDrawnTime = currentTime;
+                    lastTime = currentTime;
                 }
-                lastTime = currentTime;
             }
+        }
+    }
+
+    public void updateOnFrame(double timePassed) {
+        if (gameStatus == GameStatus.GAME_RUNNING) {
+            gameData.updateOnFrame(timePassed);
+        } else if (gameStatus == GameStatus.TITLE) {
 
         }
     }
-    public void update() {
-        player.update();
-        // do collision here
-    }
+
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D)g;
-        g2.setColor(new Color(120,200,10));
-        g2.fillRect(0, 0, screenWidth, screenHeight);
-        for (Grass grass : grasses) {
-            grass.draw(g2);
-        }
-        player.draw(g2);
-        for (Tree tree : trees) {
-            tree.draw(g2);
-        }
-        for (Rock rock : rocks) {
-            rock.draw(g2);
-        }
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setColor(new Color(120, 200, 10));
+        g2.fillRect((int)Viewport.viewport.getXOffset(), (int)Viewport.viewport.getYOffset(), (int)ceil(Viewport.viewport.getWidth() * Viewport.viewport.getScale()), (int)ceil(Viewport.viewport.getHeight() * Viewport.viewport.getScale()));
+        gameData.draw(g2);
         g2.setColor(Color.white);
-        g2.drawString(String.valueOf(FPS), 10, 10);
+        g2.drawString(String.valueOf(fps) + " target: " + targetFPS, 10, 10);
         g2.dispose();
     }
 }

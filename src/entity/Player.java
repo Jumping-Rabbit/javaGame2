@@ -1,58 +1,97 @@
 package entity;
 
 import main.KeyHandler;
-import main.GamePanel;
+import main.MouseHandler;
+import main.Viewport;
 
 import java.awt.*;
 
-public class Player extends Entity{
-    GamePanel gp;
-    KeyHandler keyH;
+import static java.lang.Math.*;
+import static main.GameData.MAP_HEIGHT;
+import static main.GameData.MAP_WIDTH;
+
+public class Player extends Entity {
+    KeyHandler keyHandler;
     double speed;
     double sprintSpeed;
-    public Player(GamePanel gp, KeyHandler keyH) {
-        this.gp = gp;
-        this.keyH = keyH;
-        setDefualtValues();
-    }
-    public void setDefualtValues() {
-        x = 100;
-        y = 100;
-        speed = 100;
-        sprintSpeed = 180;
+    public Player(KeyHandler keyHandler, MouseHandler mouseHandler) {
+
+        this.keyHandler = keyHandler;
+        x = 0;
+        y = 0;
+        speed = 150;
+        sprintSpeed = 250;
         hasCollision = true;
     }
-    public void update() {
-        if (keyH.shiftPressed) {
-            if (keyH.wPressed) {
-                y -= sprintSpeed * gp.refreshTime;
+
+    @Override
+    public void updateOnFrame(double timePassedSecs) {
+        double xChange = 0;
+        double yChange = 0;
+        // TODO: check the boundary of x and y
+        if (keyHandler.shiftPressed) {
+            if (keyHandler.wPressed && !keyHandler.sPressed) {
+                yChange -= sprintSpeed * timePassedSecs;
             }
-            if (keyH.sPressed) {
-                y += sprintSpeed * gp.refreshTime;
+            if (keyHandler.sPressed && !keyHandler.wPressed) {
+                yChange += sprintSpeed * timePassedSecs;
             }
-            if (keyH.aPressed) {
-                x -= sprintSpeed * gp.refreshTime;
+            if (keyHandler.aPressed) {
+                xChange -= sprintSpeed * timePassedSecs;
             }
-            if (keyH.dPressed) {
-                x += sprintSpeed * gp.refreshTime;
+            if (keyHandler.dPressed) {
+                xChange += sprintSpeed * timePassedSecs;
             }
         } else {
-            if (keyH.wPressed) {
-                y -= speed * gp.refreshTime;
+            if (keyHandler.wPressed && !keyHandler.sPressed) {
+                yChange -= speed * timePassedSecs;
             }
-            if (keyH.sPressed) {
-                y += speed * gp.refreshTime;
+            if (keyHandler.sPressed && !keyHandler.wPressed) {
+                yChange += speed * timePassedSecs;
             }
-            if (keyH.aPressed) {
-                x -= speed * gp.refreshTime;
+            if (keyHandler.aPressed) {
+                xChange -= speed * timePassedSecs;
             }
-            if (keyH.dPressed) {
-                x += speed * gp.refreshTime;
+            if (keyHandler.dPressed) {
+                xChange += speed * timePassedSecs;
             }
         }
+        double root2 = sqrt(2) / 2;
+        if (xChange != 0 && yChange != 0) {
+            x += xChange * root2;
+            y += yChange * root2;
+        } else {
+            x += xChange;
+            y += yChange;
+        }
+        if (x < 0) {
+            x = 0;
+        } else if (x > MAP_WIDTH) {
+            x = MAP_WIDTH;
+        }
+        if (y < 0) {
+            y = 0;
+        } else if (y > MAP_HEIGHT) {
+            y = MAP_HEIGHT;
+        }
+        Viewport.viewport.setX(x - (Viewport.viewport.getWidth() / 2));
+        Viewport.viewport.setY(y - (Viewport.viewport.getHeight() / 2));
     }
+
+    @Override
     public void draw(Graphics2D g2) {
+        double scale = Viewport.viewport.getScale();
         g2.setColor(Color.white);
-        g2.fillRect((int)Math.round(x), (int)Math.round(y), 40, 40);
+        g2.fillOval(
+                (int)round(((x - Viewport.viewport.getX()) * scale) + Viewport.viewport.getXOffset()),
+                (int)round(((y - Viewport.viewport.getY()) * scale) + Viewport.viewport.getYOffset()),
+                (int)round(20 * scale),
+                (int)round(20 * scale));
+//        System.out.println(
+//                (int)round((x - Viewport.viewport.getX()) * scale) + ":"
+//                        + (int)round((y - Viewport.viewport.getY()) * scale));
+    }
+    public int[] getSector() {
+        return new int[]{(int)floor(x / 1000), (int)floor(y / 1000)};
     }
 }
