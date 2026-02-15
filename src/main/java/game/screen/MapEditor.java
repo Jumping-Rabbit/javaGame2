@@ -68,6 +68,7 @@ public class MapEditor extends Screen{
         drawUtil = mapEditor.drawUtil;
         tileIndex = mapEditor.tileIndex;
         height = mapEditor.height;
+        exit = mapEditor.exit;
     }
 
     public Screen copy(){
@@ -303,7 +304,6 @@ public class MapEditor extends Screen{
             for (File file : openFolder(new String[]{"image.png", "stats.json"})){
                 units.add(file);
             }
-
         });
     }
 
