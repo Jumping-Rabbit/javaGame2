@@ -20,7 +20,7 @@ public abstract class Entity {
     public abstract void updateOnFrame();
     protected ArrayList<Command> commands = new ArrayList<>();
     protected ArrayList<InputType> validCommandTypes = new ArrayList<>();
-    protected void clearCommands(){
+    public void clearCommands(){
         commands.clear();
     }
     public void addCommand(Command command){
@@ -30,7 +30,10 @@ public abstract class Entity {
     }
     public void drawSelectedRing(){
         drawUtil.setColor(0, 255, 0, 25);
-        drawUtil.fillCircleInterpolate(numUtil.LTD(lastX)-5, numUtil.LTD(lastY)-5, radius+5, numUtil.LTD(x)-5, numUtil.LTD(y)-5, numUtil.LTD(lastDirection), numUtil.LTD(direction));
+        drawUtil.fillCircleInterpolate(numUtil.LTD(lastX)-5, numUtil.LTD(lastY)-5, radius, numUtil.LTD(x)-5, numUtil.LTD(y)-5, numUtil.LTD(lastDirection), numUtil.LTD(direction));
+    }
+    public double getRadius(){
+        return radius;
     }
 
 }

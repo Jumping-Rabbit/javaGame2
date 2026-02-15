@@ -123,7 +123,7 @@ public class SettingsManager{
             setMonitorNum((int)(long)graphics.get("monitorNum"));
             setDisplayMode(DisplayModes.fromValue(String.valueOf(graphics.get("displayMode"))));
             setGraphicsQuality(GraphicsQuality.fromValue(String.valueOf(graphics.get("graphicsQuality"))));
-            setAntialiasing(Boolean.getBoolean(String.valueOf(graphics.get("antialiasing"))));
+            setAntialiasing((Boolean)graphics.get("antialiasing"));
             try{setTargetFPS((double)graphics.get("targetFPS"));} catch (RuntimeException e) {setTargetFPS((long)graphics.get("targetFPS"));}
             try{SoundManager.setMasterVolume((double)audio.get("masterVolume"));} catch (RuntimeException e) {SoundManager.setMasterVolume((long)audio.get("masterVolume"));}
             try{SoundManager.setBGMVolume((double)audio.get("BGMVolume"));} catch (RuntimeException e) {SoundManager.setBGMVolume((long)audio.get("BGMVolume"));}

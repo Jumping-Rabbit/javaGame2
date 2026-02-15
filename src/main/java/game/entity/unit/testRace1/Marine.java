@@ -20,7 +20,7 @@ public class Marine extends Unit {
         lastX = numUtil.DTL(x);
         lastY = numUtil.DTL(y);
         validCommandTypes = new ArrayList<>();
-        validCommandTypes.add(InputType.LEFT_CLICK);
+        validCommandTypes.add(InputType.RIGHT_CLICK);
         hp = numUtil.DTL(40);
         armor = numUtil.DTL(1);
         speed = numUtil.DTL(10);
@@ -47,7 +47,7 @@ public class Marine extends Unit {
         lastX = marine.x;
         lastY = marine.y;
         validCommandTypes = new ArrayList<>();
-        validCommandTypes.add(InputType.LEFT_CLICK);
+        validCommandTypes.add(InputType.RIGHT_CLICK);
         hp = marine.hp;
         armor = marine.armor;
         speed = marine.speed;
@@ -67,14 +67,11 @@ public class Marine extends Unit {
         targetDirection = marine.targetDirection;
         targetX = marine.targetX;
         targetY = marine.targetY;
-        radius = 20;
+        radius = 25;
+
+        commands = marine.commands;
     }
-    public double getX(){
-        return numUtil.LTD(x);
-    }
-    public double getY(){
-        return numUtil.LTD(y);
-    }
+
     public void draw(){
         drawUtil.startRotation(numUtil.LTD(lastX), numUtil.LTD(lastY), numUtil.LTD(x), numUtil.LTD(y), 20, 20, numUtil.LTD(lastDirection), numUtil.LTD(direction));
         drawUtil.setColor(0, 0, 0);
@@ -88,14 +85,18 @@ public class Marine extends Unit {
         drawUtil.resetRotation();
     }
     public void updateOnFrame(){
-        for (Command command : commands){
-            if (command.getInputType() == InputType.LEFT_CLICK){
-                unitState = UnitState.MOVING;
-                targetX = numUtil.DTL(command.getX()-20);
-                targetY = numUtil.DTL(command.getY()-20);
+        if (!commands.isEmpty()){
+            for (Command command : commands){
+                if (command.getInputType() == InputType.RIGHT_CLICK){
+                    unitState = UnitState.MOVING;
+                    targetX = numUtil.DTL(command.getX()-20);
+                    targetY = numUtil.DTL(command.getY()-20);
+                    break;
+                }
             }
+        } else {
+            unitState = UnitState.IDLE;
         }
-        clearCommands();
 
         lastDirection = direction;
         lastX = x;
@@ -136,13 +137,12 @@ public class Marine extends Unit {
                     }
                     if (targetsReached == 2){
                         unitState = UnitState.IDLE;
+                        commands.removeFirst();
                     }
                 }
 //                System.out.println(numUtil.longToDouble(targetDirection));
 //                System.out.println("targetx:" + numUtil.longToDouble(targetX) + ":" + numUtil.longToDouble(x));
 //                System.out.println("targety:" + numUtil.longToDouble(targetY) + ":" + numUtil.longToDouble(y));
-                break;
-            case IDLE:
                 break;
         }
     }

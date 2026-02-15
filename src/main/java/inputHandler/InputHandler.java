@@ -12,6 +12,7 @@ public class InputHandler {
     private static ArrayDeque<Input> inputs = new ArrayDeque<>();
     private static ArrayDeque<Input> inputsFinal = new ArrayDeque<>();
 
+
     public static KeyHandler getKeyHandler(){
         return keyHandler;
     }
@@ -35,14 +36,11 @@ public class InputHandler {
 class MouseHandler extends MouseAdapter {
     private double pressedX;
     private double pressedY;
+    private static boolean isLeftDown = false;
     @Override
-    public void mouseReleased(MouseEvent e) {
+    public void mouseClicked(MouseEvent e){
         if (e.getButton() == MouseEvent.BUTTON1){
             InputHandler.addInput(new Input(InputType.LEFT_CLICK, (e.getX() - Viewport.viewport.getXOffset())/Viewport.viewport.getScale(), (e.getY() - Viewport.viewport.getYOffset())/Viewport.viewport.getScale()));
-        } else if (e.getButton() == MouseEvent.BUTTON2){
-            InputHandler.addInput(new Input(InputType.MIDDLE_CLICK, (e.getX() - Viewport.viewport.getXOffset())/Viewport.viewport.getScale(), (e.getY() - Viewport.viewport.getYOffset())/Viewport.viewport.getScale()));
-        } else if (e.getButton() == MouseEvent.BUTTON3){
-            InputHandler.addInput(new Input(InputType.RIGHT_CLICK, (e.getX() - Viewport.viewport.getXOffset())/Viewport.viewport.getScale(), (e.getY() - Viewport.viewport.getYOffset())/Viewport.viewport.getScale()));
         }
     }
 
@@ -53,14 +51,32 @@ class MouseHandler extends MouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e){
+        if (e.getButton() == MouseEvent.BUTTON1){
+            isLeftDown = true;
+        }
+
         pressedX = (e.getX() - Viewport.viewport.getXOffset())/Viewport.viewport.getScale();
         pressedY = (e.getY() - Viewport.viewport.getYOffset())/Viewport.viewport.getScale();
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e){
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            isLeftDown = false;
+        }
+        if (e.getButton() == MouseEvent.BUTTON2){
+            InputHandler.addInput(new Input(InputType.MIDDLE_CLICK, (e.getX() - Viewport.viewport.getXOffset())/Viewport.viewport.getScale(), (e.getY() - Viewport.viewport.getYOffset())/Viewport.viewport.getScale()));
+        } else if (e.getButton() == MouseEvent.BUTTON3){
+            InputHandler.addInput(new Input(InputType.RIGHT_CLICK, (e.getX() - Viewport.viewport.getXOffset())/Viewport.viewport.getScale(), (e.getY() - Viewport.viewport.getYOffset())/Viewport.viewport.getScale()));
+        }
     }
 
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        InputHandler.addInput(new Input(InputType.DRAG, pressedX, pressedY, (e.getX() - Viewport.viewport.getXOffset())/Viewport.viewport.getScale(), (e.getY() - Viewport.viewport.getYOffset())/Viewport.viewport.getScale()));
+        if (isLeftDown){
+            InputHandler.addInput(new Input(InputType.DRAG, pressedX, pressedY, (e.getX() - Viewport.viewport.getXOffset())/Viewport.viewport.getScale(), (e.getY() - Viewport.viewport.getYOffset())/Viewport.viewport.getScale()));
+        }
     }
 
     @Override

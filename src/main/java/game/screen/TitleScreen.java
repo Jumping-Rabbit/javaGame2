@@ -191,6 +191,7 @@ public class TitleScreen extends Screen{
     }
 
     public void draw() {
+        drawUtil.disableGameViewport();
         drawUtil.setColor(75, 75, 75);
         drawUtil.fillRect(0, 0, 1920, 100);
 

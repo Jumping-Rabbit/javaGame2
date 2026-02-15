@@ -11,6 +11,7 @@ public class Input {
     private final double y;
     private final String key;
     private final int scrollAmount;
+    private boolean isShiftHeld;
 
     public Input(InputType inputType, double x, double y){
         this.inputType = inputType;

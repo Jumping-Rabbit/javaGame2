@@ -4,6 +4,7 @@ import game.GameViewport;
 import game.Viewport;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 public class DrawUtil{
@@ -15,8 +16,11 @@ public class DrawUtil{
     double rotation;
     double factor = 0;
 
-    public void setFactor(double factor){
+    public synchronized void setFactor(double factor){
         this.factor = factor;
+    }
+    public synchronized double getFactor(){
+        return factor;
     }
 
     public void setGameViewport(GameViewport gameViewport) {
@@ -83,12 +87,14 @@ public class DrawUtil{
         factor = Math.clamp(factor, 0, 1);
         double x = x2 * factor + x1 * (1 - factor);
         double y = y2 * factor + y1 * (1 - factor);
+        double scale = Viewport.viewport.getScale();
         if (gameViewport != null){
             if (!CollisionUtil.RectRectCollision(gameViewport.getX(), gameViewport.getY(), gameViewport.getWidth(), gameViewport.getHeight(), x, y, width, height)){
                 return;
             }
+            g2.fillRect((int)Math.round(((x+gameViewport.getX())-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round(((y+gameViewport.getY())-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(width*scale), (int)Math.round(height*scale));
+            return;
         }
-        double scale = Viewport.viewport.getScale();
 //        rotate(x + width/2, y + height/2, direction2 * factor + direction1 * (1 - factor));
         g2.fillRect((int)Math.round((x-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((y-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(width*scale), (int)Math.round(height*scale));
 //        resetRotation();
@@ -127,6 +133,15 @@ public class DrawUtil{
         double scale = Viewport.viewport.getScale();
         g2.drawRect((int)Math.round((rectangle.x-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((rectangle.y-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(rectangle.width*scale), (int)Math.round(rectangle.height*scale));
     }
+    public void fillRect(Rectangle2D.Double rectangle) {
+        if (gameViewport != null){
+            if (!CollisionUtil.RectRectCollision(gameViewport.getX(), gameViewport.getY(), gameViewport.getWidth(), gameViewport.getHeight(), rectangle.x, rectangle.y, rectangle.width, rectangle.height)){
+                return;
+            }
+        }
+        double scale = Viewport.viewport.getScale();
+        g2.fillRect((int)Math.round((rectangle.x-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((rectangle.y-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(rectangle.width*scale), (int)Math.round(rectangle.height*scale));
+    }
 
 
     public void fillCircle(double x, double y, double radius) {
@@ -142,12 +157,14 @@ public class DrawUtil{
         factor = Math.clamp(factor, 0, 1);
         double x = x2 * factor + x1 * (1 - factor);
         double y = y2 * factor + y1 * (1 - factor);
+        double scale = Viewport.viewport.getScale();
         if (gameViewport != null){
             if (!CollisionUtil.RectCircleCollision(x, y, radius, gameViewport.getX(), gameViewport.getY(), gameViewport.getWidth(), gameViewport.getHeight())){
                 return;
             }
+            g2.fillOval((int)Math.round(((x+gameViewport.getX()) - Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round(((y+gameViewport.getY())-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(radius*2*scale), (int)Math.round(radius*2*scale));
         }
-        double scale = Viewport.viewport.getScale();
+
 //        rotate(x + radius, y + radius, direction2 * factor + direction1 * (1 - factor));
         g2.fillOval((int)Math.round((x - Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((y-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(radius*2*scale), (int)Math.round(radius*2*scale));
 //        resetRotation();

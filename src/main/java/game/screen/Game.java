@@ -4,9 +4,11 @@ import game.GameViewport;
 import game.entity.Command;
 import game.entity.Entity;
 import game.entity.building.Building;
+import game.entity.numUtil;
 import game.entity.players;
 import game.entity.unit.Unit;
 import game.entity.unit.testRace1.Marine;
+import utils.CollisionUtil;
 import utils.DrawUtil;
 import inputHandler.Input;
 import inputHandler.InputHandler;
@@ -17,10 +19,13 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import tile.TileManager;
 
+import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Game extends Screen {
     public enum GameState {
@@ -36,6 +41,7 @@ public class Game extends Screen {
     ArrayList<Unit> units;
     ArrayList<Building> buildings;
     ArrayList<Entity> selectedEntities;
+    Rectangle2D.Double selectedRectangle = null;
     public Game(DrawUtil drawUtil, File map) {
         JSONParser parser = new JSONParser();
         Object object;
@@ -51,10 +57,13 @@ public class Game extends Screen {
     }
     public Game(DrawUtil drawUtil, File map, int playerNum) {
         units = new ArrayList<>();
-        units.add(new Marine(drawUtil, 100, 100, players.BLUE));//temp for testing
+        for (int i = 0; i < 10; i++){
+            units.add(new Marine(drawUtil, (int)(Math.random()*1000), (int)(Math.random()*700), players.BLUE));
+        }
+
         buildings = new ArrayList<>();
         selectedEntities = new ArrayList<>();
-        selectedEntities.add(units.getFirst());
+        selectedEntities.addAll(units);
 
         tileManager = new TileManager(drawUtil, map);
         this.map = map;
@@ -99,8 +108,41 @@ public class Game extends Screen {
         for (Input input : InputHandler.getInputs()){
             switch (input.getInputType()) {
                 case LEFT_CLICK:
+                    selectedEntities.clear();
+                    for (Unit unit : units){
+                        if(CollisionUtil.PointCircleCollision(input.getX(), input.getY(), numUtil.interpolate(unit.getLastX(), unit.getX(), drawUtil.getFactor())+unit.getRadius()-5, numUtil.interpolate(unit.getLastY(), unit.getY(), drawUtil.getFactor())+unit.getRadius()-5, unit.getRadius())){
+                            selectedEntities.clear();
+                            selectedEntities.add(unit);
+                        }
+                    }
+                    break;
+                case DRAG:
+                    selectedEntities.clear();
+                    for (Unit unit : units){
+                        if(CollisionUtil.RectCircleCollision(numUtil.interpolate(unit.getLastX(), unit.getX(), drawUtil.getFactor())+unit.getRadius()-5, numUtil.interpolate(unit.getLastY(), unit.getY(), drawUtil.getFactor())+unit.getRadius()-5, unit.getRadius(), Math.min(input.getX(), input.getStartX()), Math.min(input.getY(), input.getStartY()), Math.abs(input.getX()-input.getStartX()), Math.abs(input.getX()-input.getStartX()))){
+                            selectedEntities.add(unit);
+                        }
+                    }
+                    selectedRectangle = new Rectangle2D.Double(Math.min(input.getX(), input.getStartX()), Math.min(input.getY(), input.getStartY()), Math.abs(input.getX()-input.getStartX()), Math.abs(input.getY()-input.getStartY()));
+                    break;
+                case RIGHT_CLICK:
                     for (Entity entity : selectedEntities){
-                        entity.addCommand(new Command(InputType.LEFT_CLICK, input.getX(), input.getY()));
+                        entity.clearCommands();//make shift button work
+                        entity.addCommand(new Command(InputType.RIGHT_CLICK, input.getX(), input.getY()));
+                    }
+                    break;
+                case KEYPRESS:
+                    if (Objects.equals(input.getKey(), "w")){
+                        //change gameweivport x
+                    }
+                    if (Objects.equals(input.getKey(), "a")){
+
+                    }
+                    if (Objects.equals(input.getKey(), "s")){
+
+                    }
+                    if (Objects.equals(input.getKey(), "d")){
+
                     }
                     break;
             }
@@ -114,6 +156,7 @@ public class Game extends Screen {
     }
 
     public void draw() {
+        drawUtil.setGameViewport(gameViewport);
         for (Entity selected : selectedEntities){
             selected.drawSelectedRing();
         }
@@ -122,6 +165,10 @@ public class Game extends Screen {
         }
         for (Building building : buildings){
             building.draw();
+        }
+        if (selectedRectangle != null){
+            drawUtil.setColor(0, 255, 0, 50);
+            drawUtil.fillRect(selectedRectangle);
         }
 
     }
