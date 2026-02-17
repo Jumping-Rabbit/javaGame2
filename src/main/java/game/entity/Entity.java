@@ -2,6 +2,7 @@ package game.entity;
 
 import utils.DrawUtil;
 import inputHandler.InputType;
+import utils.numUtil;
 
 import java.util.ArrayList;
 

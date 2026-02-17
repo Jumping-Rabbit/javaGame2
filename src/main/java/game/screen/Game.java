@@ -4,7 +4,7 @@ import game.GameViewport;
 import game.entity.Command;
 import game.entity.Entity;
 import game.entity.building.Building;
-import game.entity.numUtil;
+import utils.numUtil;
 import game.entity.players;
 import game.entity.unit.Unit;
 import game.entity.unit.testRace1.Marine;
@@ -19,7 +19,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import tile.TileManager;
 
-import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileReader;
@@ -57,10 +56,9 @@ public class Game extends Screen {
     }
     public Game(DrawUtil drawUtil, File map, int playerNum) {
         units = new ArrayList<>();
-        for (int i = 0; i < 10; i++){
+        for (int i = 0; i < 100; i++){
             units.add(new Marine(drawUtil, (int)(Math.random()*1000), (int)(Math.random()*700), players.BLUE));
         }
-
         buildings = new ArrayList<>();
         selectedEntities = new ArrayList<>();
         selectedEntities.addAll(units);
@@ -77,7 +75,6 @@ public class Game extends Screen {
         } catch (IOException | ParseException e) {
             throw new RuntimeException(e);
         }
-
         this.drawUtil = drawUtil;
         drawUtil.setGameViewport(gameViewport);
     }
@@ -87,6 +84,7 @@ public class Game extends Screen {
     }
 
     private Game(Game game){
+        selectedRectangle = game.selectedRectangle;
         map = game.map;
         drawUtil = game.drawUtil;
         gameState = game.gameState;
@@ -102,6 +100,29 @@ public class Game extends Screen {
             }
         }
         buildings = game.buildings;
+    }
+
+    private void calculatePhysics(){
+        for (Unit unit1 : units){
+            for (Unit unit2 : units){
+                if (unit1 == unit2){
+                    break;
+                }
+                if (CollisionUtil.CircleCircleCollision(unit1.getX(), unit1.getY(), unit1.getRadius(), unit2.getX(), unit2.getY(), unit2.getRadius())){
+                    double distance = Math.sqrt(Math.pow(unit2.getX() - unit1.getX(), 2) + Math.pow(unit2.getY() - unit1.getY(), 2));
+                    if (distance < unit1.getRadius() + unit2.getRadius() && distance > 0) {
+                        double overlap = (unit1.getRadius() + unit2.getRadius()) - distance;
+                        double ux = (unit2.getX() - unit1.getX()) / distance;
+                        double uy = (unit2.getY() - unit1.getY()) / distance;
+                        unit1.changeX(numUtil.DTL((ux * (overlap / 2))*-1));
+                        unit1.changeY(numUtil.DTL((uy * (overlap / 2))*-1));
+                        unit2.changeX(numUtil.DTL(ux * (overlap / 2)));
+                        unit2.changeY(numUtil.DTL(uy * (overlap / 2)));
+                    }
+
+                }
+            }
+        }
     }
 
     public void updateOnFrame() {
@@ -133,16 +154,13 @@ public class Game extends Screen {
                     break;
                 case KEYPRESS:
                     if (Objects.equals(input.getKey(), "w")){
-                        //change gameweivport x
-                    }
-                    if (Objects.equals(input.getKey(), "a")){
-
-                    }
-                    if (Objects.equals(input.getKey(), "s")){
-
-                    }
-                    if (Objects.equals(input.getKey(), "d")){
-
+                        gameViewport.changeY(-10);
+                    }else if (Objects.equals(input.getKey(), "a")){
+                        gameViewport.changeX(-10);
+                    } else if (Objects.equals(input.getKey(), "s")){
+                        gameViewport.changeY(10);
+                    }else if (Objects.equals(input.getKey(), "d")){
+                        gameViewport.changeX(10);
                     }
                     break;
             }
@@ -152,6 +170,10 @@ public class Game extends Screen {
         }
         for (Building building : buildings){
             building.updateOnFrame();
+        }
+        calculatePhysics();
+        if (!InputHandler.MouseDown()){
+            selectedRectangle = null;
         }
     }
 

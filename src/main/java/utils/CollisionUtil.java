@@ -63,8 +63,8 @@ public class CollisionUtil {
         if (!RectRectCollision(x1, y1, x1+r1*2, y1+r1*2, x2, y2, x2+r2*2, y2+r2*2)){
             return false;
         }
-        double dx = x2 - x1;
-        double dy = y2 - y1;
+        double dx = (x2+r2) - (x1+r1);
+        double dy = (y2+r2) - (y1+r1);
         double sumRadii = r1 + r2;
         return (dx * dx + dy * dy) <= (sumRadii * sumRadii);
     }

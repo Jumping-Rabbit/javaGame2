@@ -2,7 +2,7 @@ package game.entity.unit;
 
 import game.entity.Effects;
 import game.entity.Entity;
-import game.entity.numUtil;
+import utils.numUtil;
 import game.entity.players;
 
 import java.util.ArrayList;
@@ -28,6 +28,12 @@ public abstract class Unit extends Entity {
     }
     public double getY(){
         return numUtil.LTD(y);
+    }
+    public void changeX(long change){
+        x += change;
+    }
+    public void changeY(long change){
+        y += change;
     }
     public double getLastX(){
         return numUtil.LTD(lastX);

@@ -1,7 +1,7 @@
 package game.entity.unit.testRace1;
 
 import game.entity.Command;
-import game.entity.numUtil;
+import utils.numUtil;
 import game.entity.players;
 import game.entity.unit.Unit;
 import game.entity.unit.UnitState;

@@ -41,6 +41,14 @@ public class GameViewport {
         this.viewportY = viewportY;
     }
 
+    public void changeX(double change){
+        viewportX += change;
+    }
+
+    public void changeY(double change){
+        viewportY += change;
+    }
+
     public double getWidth() {
         return viewportWidth;
     }
@@ -56,4 +64,6 @@ public class GameViewport {
     public void setScale(double scale){
         this.scale = scale;
     }
+
+
 }

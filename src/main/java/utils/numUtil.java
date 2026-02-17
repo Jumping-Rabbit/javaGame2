@@ -1,6 +1,4 @@
-package game.entity;
-
-import utils.DrawUtil;
+package utils;
 
 public class numUtil {
     public static double LTD(long num){

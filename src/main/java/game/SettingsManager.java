@@ -9,18 +9,48 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class SettingsManager{
+    public enum SettingTypes{
+        INTEGER,
+        BOOLEAN,
+        STRING
+    }
     public enum Settings{
-        TARGET_FPS,
-        MONITOR_NUM,
-        DISPLAY_MODES,
-        MASTER_VOLUME,
-        BGM_VOLUME,
-        ANTIALIASING,
-        GRAPHICS_QUALITY
+        TARGET_FPS(SettingTypes.INTEGER, "targetFPS"),
+        MONITOR_NUM(SettingTypes.INTEGER, "monitorNum"),
+        DISPLAY_MODES(SettingTypes.STRING, "displayMode"),
+        MASTER_VOLUME(SettingTypes.INTEGER, "masterVolume"),
+        BGM_VOLUME(SettingTypes.INTEGER, "BGMVolume"),
+        ANTIALIASING(SettingTypes.BOOLEAN, "antialiasing"),
+        GRAPHICS_QUALITY(SettingTypes.STRING, "graphicsQuality");
+
+        private final SettingTypes type;
+        private final String id;
+
+//        public abstract String getStringValue();
+
+        Settings(SettingTypes type, String id) {
+            this.type = type;
+            this.id = id;
+        }
+        public SettingTypes getSettingType(){
+            return type;
+        }
+        public String getId(){
+            return id;
+        }
+        public static Settings fromValue(String givenName) {
+            for (Settings setting : values()) {
+                if (setting.id.equalsIgnoreCase(givenName)) {
+                    return setting;
+                }
+            }
+            return null;
+        }
     }
 
-    private final double minTargetFPS = 0.1;
-    private double targetFPS = 0.1;
+
+    private final int minTargetFPS = 1;
+    private int targetFPS = 1;
     private final Object targetFPSLock = new Object();
 
 
@@ -54,14 +84,14 @@ public class SettingsManager{
     private final Object displayModeLock = new Object();
 
 
-    private final double minMasterVolume = 0;
-    private final double maxMasterVolume = 100;
-    private double masterVolume = 0;
+    private final int minMasterVolume = 0;
+    private final int maxMasterVolume = 100;
+    private int masterVolume = 0;
     private final Object masterVolumeLock = new Object();
 
-    private final double minBGMVolume = 0;
-    private final double maxBGMVolume = 100;
-    private double BGMVolume = 0;
+    private final int minBGMVolume = 0;
+    private final int maxBGMVolume = 100;
+    private int BGMVolume = 0;
     private final Object BGMVolumeLock = new Object();
 
     private boolean antialiasing = true;
@@ -124,16 +154,40 @@ public class SettingsManager{
             setDisplayMode(DisplayModes.fromValue(String.valueOf(graphics.get("displayMode"))));
             setGraphicsQuality(GraphicsQuality.fromValue(String.valueOf(graphics.get("graphicsQuality"))));
             setAntialiasing((Boolean)graphics.get("antialiasing"));
-            try{setTargetFPS((double)graphics.get("targetFPS"));} catch (RuntimeException e) {setTargetFPS((long)graphics.get("targetFPS"));}
-            try{SoundManager.setMasterVolume((double)audio.get("masterVolume"));} catch (RuntimeException e) {SoundManager.setMasterVolume((long)audio.get("masterVolume"));}
-            try{SoundManager.setBGMVolume((double)audio.get("BGMVolume"));} catch (RuntimeException e) {SoundManager.setBGMVolume((long)audio.get("BGMVolume"));}
+            try{setTargetFPS((int)(long)graphics.get("targetFPS"));} catch (RuntimeException e) {setTargetFPS((int)(long)graphics.get("targetFPS"));}
+            try{SoundManager.setMasterVolume((int)(long)audio.get("masterVolume"));} catch (RuntimeException e) {SoundManager.setMasterVolume((int)(long)audio.get("masterVolume"));}
+            try{SoundManager.setBGMVolume((int)(long)audio.get("BGMVolume"));} catch (RuntimeException e) {SoundManager.setBGMVolume((int)(long)audio.get("BGMVolume"));}
         } catch (IOException | ParseException e) {
             throw new RuntimeException(e);
         }
     }
 
+    public String getSettingStringValue(String id){
+        return switch (id) {
+            case "targetFPS" -> String.valueOf(getTargetFPS());
+            case "monitorNum" -> String.valueOf(getMonitorNum());
+            case "displayMode" -> getDisplayMode().getString();
+            case "masterVolume" -> String.valueOf(getMasterVolume());
+            case "BGMVolume" -> String.valueOf(getBGMVolume());
+            case "antialiasing" -> String.valueOf(getAntialiasing());
+            case "graphicsQuality" -> getGraphicsQuality().getString();
+            default -> "";
+        };
+    }
+    public void setSetting(String id, String set){
+        switch (id) {
+            case "targetFPS" -> setTargetFPS(Integer.parseInt(set));
+            case "monitorNum" -> setMonitorNum(Integer.parseInt(set));
+            case "displayMode" -> setDisplayMode(DisplayModes.fromValue(set));
+            case "masterVolume" -> setMasterVolume(Integer.parseInt(set));
+            case "BGMVolume" -> setBGMVolume(Integer.parseInt(set));
+            case "antialiasing" -> setAntialiasing(Boolean.parseBoolean(set));
+            case "graphicsQuality" -> setGraphicsQuality(GraphicsQuality.fromValue(set));
+        }
+    }
 
-    public void setTargetFPS(double targetFPS){
+
+    public void setTargetFPS(int targetFPS){
         targetFPS = Math.max(targetFPS, minTargetFPS);
         if (targetFPS < minTargetFPS){
             return;
@@ -143,7 +197,7 @@ public class SettingsManager{
             writeSettings("graphics", "targetFPS", targetFPS);
         }
     }
-    public double getTargetFPS(){
+    public int getTargetFPS(){
         synchronized (targetFPSLock) {
             return targetFPS;
         }
@@ -205,27 +259,27 @@ public class SettingsManager{
         }
     }
 
-    public void setMasterVolume(double volume){
+    public void setMasterVolume(int volume){
         volume = Math.clamp(volume, minMasterVolume, maxMasterVolume);
         synchronized (masterVolumeLock){
             masterVolume = volume;
             writeSettings("audio", "masterVolume", masterVolume);
         }
     }
-    public double getMasterVolume(){
+    public int getMasterVolume(){
         synchronized (masterVolumeLock) {
             return masterVolume;
         }
     }
 
-    public void setBGMVolume(double volume){
+    public void setBGMVolume(int volume){
         volume = Math.clamp(volume, minBGMVolume, maxBGMVolume);
         synchronized (BGMVolumeLock){
             BGMVolume = volume;
             writeSettings("audio", "BGMVolume", BGMVolume);
         }
     }
-    public double getBGMVolume(){
+    public int getBGMVolume(){
         synchronized (BGMVolumeLock) {
             return BGMVolume;
         }

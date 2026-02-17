@@ -24,6 +24,10 @@ public class InputHandler {
         inputs = new ArrayDeque<>();
     };
 
+    public static boolean MouseDown(){
+        return mouseHandler.mouseDown();
+    }
+
     protected static void addInput(Input input){
         inputs.addLast(input);
     }
@@ -37,6 +41,11 @@ class MouseHandler extends MouseAdapter {
     private double pressedX;
     private double pressedY;
     private static boolean isLeftDown = false;
+
+    protected boolean mouseDown(){
+        return isLeftDown;
+    }
+
     @Override
     public void mouseClicked(MouseEvent e){
         if (e.getButton() == MouseEvent.BUTTON1){
@@ -83,6 +92,7 @@ class MouseHandler extends MouseAdapter {
     public void mouseWheelMoved(MouseWheelEvent e) {
         InputHandler.addInput(new Input(InputType.SCROLL, (e.getX() - Viewport.viewport.getXOffset())/Viewport.viewport.getScale(), (e.getY() - Viewport.viewport.getYOffset())/Viewport.viewport.getScale(), e.getWheelRotation()));
     }
+
 
 }
 

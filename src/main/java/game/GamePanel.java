@@ -8,10 +8,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import static java.lang.Math.*;
 
@@ -133,7 +131,7 @@ public class GamePanel extends JPanel{
                             setGameStatus(GameStatus.MAP_EDITOR);
                             break;
                         case SETTINGS:
-                            setSettings(settings = new Settings(drawUtil));
+                            setSettings(settings = new Settings(drawUtil, settingsManager));
                             setGameStatus(GameStatus.SETTINGS);
                             break;
                         case CUSTOM:

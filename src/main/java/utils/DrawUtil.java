@@ -41,9 +41,16 @@ public class DrawUtil{
 
     public void startRotation(double x1, double y1, double x2, double y2, double xOffset, double yOffset, double direction1, double direction2){
         factor = Math.clamp(factor, 0, 1);
-        double x = (x2 * factor + x1 * (1 - factor)) + xOffset;
-        double y = (y2 * factor + y1 * (1 - factor)) + yOffset;
-        rotate(x, y, direction2 * factor + direction1 * (1 - factor));
+        double x;
+        double y;
+        if (gameViewport != null){
+            x = numUtil.interpolate(x1 + xOffset-gameViewport.getX(), x2 + xOffset-gameViewport.getX(), factor);
+            y = numUtil.interpolate(y1 + yOffset-gameViewport.getY(), y2 + yOffset-gameViewport.getY(), factor);
+        } else {
+            x = numUtil.interpolate(x1 + xOffset, x2 + xOffset, factor);
+            y = numUtil.interpolate(y1 + yOffset, y2 + yOffset, factor);
+        }
+        rotate(x, y, numUtil.interpolate(direction1, direction2, factor));
     }
 
     private void rotate(double x, double y, double rotation){
@@ -92,23 +99,27 @@ public class DrawUtil{
             if (!CollisionUtil.RectRectCollision(gameViewport.getX(), gameViewport.getY(), gameViewport.getWidth(), gameViewport.getHeight(), x, y, width, height)){
                 return;
             }
-            g2.fillRect((int)Math.round(((x+gameViewport.getX())-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round(((y+gameViewport.getY())-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(width*scale), (int)Math.round(height*scale));
+            g2.fillRect((int)Math.round(((x-gameViewport.getX())-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round(((y-gameViewport.getY())-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(width*scale), (int)Math.round(height*scale));
             return;
         }
 //        rotate(x + width/2, y + height/2, direction2 * factor + direction1 * (1 - factor));
         g2.fillRect((int)Math.round((x-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((y-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(width*scale), (int)Math.round(height*scale));
 //        resetRotation();
     }
+
     public void fillRoundRectInterpolate(double x1, double y1, double width, double height, double edge, double x2, double y2, double direction1, double direction2) {
         factor = Math.clamp(factor, 0, 1);
         double x = x2 * factor + x1 * (1 - factor);
         double y = y2 * factor + y1 * (1 - factor);
+        double scale = Viewport.viewport.getScale();
         if (gameViewport != null){
             if (!CollisionUtil.RectRectCollision(gameViewport.getX(), gameViewport.getY(), gameViewport.getWidth(), gameViewport.getHeight(), x, y, width, height)){
                 return;
             }
+            g2.fillRoundRect((int)Math.round((x-gameViewport.getX()-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((y-gameViewport.getY()-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(width*scale), (int)Math.round(height*scale), (int)Math.round(edge*scale), (int)Math.round(edge*scale));
+            return;
         }
-        double scale = Viewport.viewport.getScale();
+
 //        rotate(x + width/2, y + height/2, direction2 * factor + direction1 * (1 - factor));
         g2.fillRoundRect((int)Math.round((x-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((y-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(width*scale), (int)Math.round(height*scale), (int)Math.round(edge*scale), (int)Math.round(edge*scale));
 //        resetRotation();
@@ -158,13 +169,14 @@ public class DrawUtil{
         double x = x2 * factor + x1 * (1 - factor);
         double y = y2 * factor + y1 * (1 - factor);
         double scale = Viewport.viewport.getScale();
+
         if (gameViewport != null){
             if (!CollisionUtil.RectCircleCollision(x, y, radius, gameViewport.getX(), gameViewport.getY(), gameViewport.getWidth(), gameViewport.getHeight())){
                 return;
             }
-            g2.fillOval((int)Math.round(((x+gameViewport.getX()) - Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round(((y+gameViewport.getY())-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(radius*2*scale), (int)Math.round(radius*2*scale));
+            g2.fillOval((int)Math.round((x-gameViewport.getX() - Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((y-gameViewport.getY()-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(radius*2*scale), (int)Math.round(radius*2*scale));
+            return;
         }
-
 //        rotate(x + radius, y + radius, direction2 * factor + direction1 * (1 - factor));
         g2.fillOval((int)Math.round((x - Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((y-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(radius*2*scale), (int)Math.round(radius*2*scale));
 //        resetRotation();
@@ -177,7 +189,7 @@ public class DrawUtil{
             }
         }
         double scale = Viewport.viewport.getScale();
-        g2.drawImage(image, (int)Math.round((x-Viewport.viewport.getX())*scale + Viewport.viewport.getXOffset()), (int)Math.round((y-Viewport.viewport.getY())*scale + Viewport.viewport.getYOffset()), (int)Math.round(width*scale), (int)Math.round(height*scale), null);
+        g2.drawImage(image, (int)Math.round(x-Viewport.viewport.getX()*scale + Viewport.viewport.getXOffset()), (int)Math.round(y-Viewport.viewport.getY()*scale + Viewport.viewport.getYOffset()), (int)Math.round(width*scale), (int)Math.round(height*scale), null);
     }
 
     public void drawString(double x, double y, String string, int size){

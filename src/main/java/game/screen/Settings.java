@@ -1,5 +1,6 @@
 package game.screen;
 
+import game.SettingsManager;
 import utils.CollisionUtil;
 import utils.DrawUtil;
 import inputHandler.Input;
@@ -28,48 +29,69 @@ public class Settings extends Screen{
         }
     }
     public enum AudioButtons {
-        MASTER_VOLUME(new Rectangle(50, 150, 1000, 100), "master volume"),
-        BGM_VOLUME(new Rectangle(50, 300, 1000, 100), "bgm volume");
+        MASTER_VOLUME(new Rectangle(50, 150, 1000, 100), "master volume", SettingsManager.Settings.MASTER_VOLUME, "masterVolume"),
+        BGM_VOLUME(new Rectangle(50, 300, 1000, 100), "bgm volume", SettingsManager.Settings.BGM_VOLUME, "BGMVolume");
 
         private final Rectangle rectangle;
         private final String name;
-        AudioButtons(Rectangle rectangle, String name){
+        private final SettingsManager.Settings setting;
+        private final String id;
+        AudioButtons(Rectangle rectangle, String name, SettingsManager.Settings setting, String id){
             this.rectangle = rectangle;
             this.name = name;
+            this.setting = setting;
+            this.id = id;
         }
         private String getName(){
             return name;
         }
         private Rectangle getRectangle(){
             return rectangle;
+        }
+        private SettingsManager.Settings getSetting(){
+            return setting;
+        }
+        private String getId(){
+            return id;
         }
     }
     public enum GraphicsButtons {
-        GRAPHICS_LEVEL(new Rectangle(50, 150, 1000, 100), "graphics level"),
-        MONITOR_NUM(new Rectangle(50, 300, 1000, 100), "monitor num"),
-        TARGET_FPS(new Rectangle(50, 450, 1000, 100), "target fps"),
-        ANTIALIASING(new Rectangle(50, 600, 1000, 100), "antialiasing"),
-        DISPLAY_MODE(new Rectangle(50, 750, 1000, 100), "display mode");
+        GRAPHICS_QUALITY(new Rectangle(50, 150, 1000, 100), "graphics quality", SettingsManager.Settings.GRAPHICS_QUALITY, "graphicsQuality"),
+        MONITOR_NUM(new Rectangle(50, 300, 1000, 100), "monitor num", SettingsManager.Settings.MONITOR_NUM, "monitorNum"),
+        TARGET_FPS(new Rectangle(50, 450, 1000, 100), "target fps", SettingsManager.Settings.TARGET_FPS, "targetFPS"),
+        ANTIALIASING(new Rectangle(50, 600, 1000, 100), "antialiasing", SettingsManager.Settings.ANTIALIASING, "antialiasing"),
+        DISPLAY_MODE(new Rectangle(50, 750, 1000, 100), "display mode", SettingsManager.Settings.DISPLAY_MODES, "displayMode");
 
         private final Rectangle rectangle;
         private final String name;
-        GraphicsButtons(Rectangle rectangle, String name){
+        private final SettingsManager.Settings setting;
+        private final String id;
+        GraphicsButtons(Rectangle rectangle, String name, SettingsManager.Settings setting, String id){
             this.rectangle = rectangle;
             this.name = name;
+            this.setting = setting;
+            this.id = id;
+        }
+        private SettingsManager.Settings getSetting(){
+            return setting;
         }
         private String getName(){
             return name;
         }
         private Rectangle getRectangle(){
             return rectangle;
+        }
+        private String getId(){
+            return id;
         }
     }
     private DrawUtil drawUtil;
     private boolean isEditing = false;
     private Buttons currentSection = Buttons.GRAPHICS;
-    private GraphicsButtons currentGraphicsSetting = GraphicsButtons.GRAPHICS_LEVEL;
+    private GraphicsButtons currentGraphicsSetting = GraphicsButtons.GRAPHICS_QUALITY;
     private AudioButtons currentAudioSetting = AudioButtons.MASTER_VOLUME;
     private boolean exit = false;
+    private SettingsManager settingsManager;
 
     public boolean isExit() {
         if (exit){
@@ -82,12 +104,13 @@ public class Settings extends Screen{
     public void resetSelections(){
         isEditing = false;
         currentSection = Buttons.GRAPHICS;
-        currentGraphicsSetting = GraphicsButtons.GRAPHICS_LEVEL;
+        currentGraphicsSetting = GraphicsButtons.GRAPHICS_QUALITY;
         currentAudioSetting = AudioButtons.MASTER_VOLUME;
     }
 
-    public Settings(DrawUtil drawUtil) {
+    public Settings(DrawUtil drawUtil, SettingsManager settingsManager) {
         this.drawUtil = drawUtil;
+        this.settingsManager = settingsManager;
     }
 
     public Settings(Settings settings){
@@ -96,11 +119,21 @@ public class Settings extends Screen{
         currentSection = settings.currentSection;
         currentGraphicsSetting = settings.currentGraphicsSetting;
         currentAudioSetting = settings.currentAudioSetting;
-        exit = settings.exit ;
+        exit = settings.exit;
+        settingsManager = settings.settingsManager;
     }
 
     public Screen copy(){
         return new Settings(this);
+    }
+
+    private boolean isDouble(String string){
+        try{
+            Double.parseDouble(string);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public void updateOnFrame() {
@@ -112,8 +145,7 @@ public class Settings extends Screen{
                             Buttons oldButton = currentSection;
                             currentSection = Buttons.values()[(currentSection.ordinal() - 1) >= 0 ? (currentSection.ordinal() - 1) : (Buttons.values().length - 1)];
                             if (currentSection != oldButton) {
-                                isEditing = false;
-                                currentGraphicsSetting = GraphicsButtons.GRAPHICS_LEVEL;
+                                currentGraphicsSetting = GraphicsButtons.GRAPHICS_QUALITY;
                                 currentAudioSetting = AudioButtons.MASTER_VOLUME;
                             }
                             break;
@@ -123,8 +155,7 @@ public class Settings extends Screen{
                             Buttons oldButton = currentSection;
                             currentSection = Buttons.values()[(currentSection.ordinal() + 1) % Buttons.values().length];
                             if (currentSection != oldButton) {
-                                isEditing = false;
-                                currentGraphicsSetting = GraphicsButtons.GRAPHICS_LEVEL;
+                                currentGraphicsSetting = GraphicsButtons.GRAPHICS_QUALITY;
                                 currentAudioSetting = AudioButtons.MASTER_VOLUME;
                             }
                         }
@@ -157,28 +188,78 @@ public class Settings extends Screen{
                         }
                         exit = true;
                     } else if (Objects.equals(input.getKey(), "enter")){
+                        if (currentSection == Buttons.EXIT){
+                            exit = true;
+                            break;
+                        }
                         isEditing = !isEditing;
+                    }
+                    if (isEditing){
+                        String currentSetting = switch (currentSection) {
+                            case GRAPHICS -> currentGraphicsSetting.getId();
+                            case AUDIO -> currentAudioSetting.getId();
+                            default -> "";
+                        };
+                        switch(SettingsManager.Settings.fromValue(currentSetting).getSettingType()){
+                            case INTEGER:
+                                if (Objects.equals(input.getKey(), "backspace") && !settingsManager.getSettingStringValue(currentSetting).isEmpty()){
+                                    settingsManager.setSetting(currentSetting, !settingsManager.getSettingStringValue(currentSetting).substring(0, String.valueOf(settingsManager.getSettingStringValue(currentSetting)).length() - 1).isEmpty() ? settingsManager.getSettingStringValue(currentSetting).substring(0, String.valueOf(settingsManager.getSettingStringValue(currentSetting)).length() - 1) : "0");
+                                } else if (isDouble(input.getKey())){
+                                    settingsManager.setSetting(currentSetting,settingsManager.getSettingStringValue(currentSetting) + input.getKey());
+                                }
+                                break;
+                            case BOOLEAN:
+                                if (Objects.equals(input.getKey(), "w")||Objects.equals(input.getKey(), "a")||Objects.equals(input.getKey(), "s")||Objects.equals(input.getKey(), "d")){
+                                    settingsManager.setSetting(currentSetting, settingsManager.getSettingStringValue(currentSetting).equals("true") ? "false" : "true");
+                                }
+                                break;
+                            case STRING:
+                                //TODO: handle the string cases with the enums
+                                break;
+                        }
+
                     }
                     break;
                 case LEFT_CLICK:
-//                    for (int i = 0; i < sections.length; i++) {
-//                        if (CollisionUtil.RectPointCollision(sectionWidth*i, 0, sectionWidth, 100, input.getX(), input.getY())) {
-//                            int oldIndex = sectionIndex;
-//                            sectionIndex = i;
-//                            if (sectionIndex != oldIndex){
-//                                settingsIndex = 0;
-//                            }
-//                        }
-//                    }
+                    for (Buttons button : Buttons.values()){
+                        if (CollisionUtil.RectPointCollision(button.getRectangle(), input.getX(), input.getY())){
+                            if (currentSection == Buttons.EXIT && button == Buttons.EXIT){
+                                exit = true;
+                                break;
+                            }
+                            currentSection = button;
+                            break;
+                        }
+                    }
+                    switch(currentSection){
+                        case AUDIO:
+                            for (AudioButtons button : AudioButtons.values()){
+                                if (CollisionUtil.RectPointCollision(button.getRectangle(), input.getX(), input.getY())){
+                                    currentAudioSetting = button;
+                                    break;
+                                }
+                            }
+                            break;
+                        case GRAPHICS:
+                            for (GraphicsButtons button : GraphicsButtons.values()){
+                                if (CollisionUtil.RectPointCollision(button.getRectangle(), input.getX(), input.getY())){
+                                    currentGraphicsSetting = button;
+                                    break;
+                                }
+                            }
+                            break;
+                    }
                     break;
                 case SCROLL:
-//                    settingsIndex = Math.min(Math.max(sectionIndex+input.getScroll(), 0), sectionSettings.size()-2);
-//                    break;
+                    switch (currentSection) {
+                        case GRAPHICS:
+                            currentGraphicsSetting = GraphicsButtons.values()[((currentGraphicsSetting.ordinal() + input.getScroll()) >= 0 ? (currentGraphicsSetting.ordinal() + input.getScroll()) : (GraphicsButtons.values().length + (currentGraphicsSetting.ordinal() + input.getScroll()))) % GraphicsButtons.values().length];
+                            break;
+                        case AUDIO:
+                            currentAudioSetting = AudioButtons.values()[((currentAudioSetting.ordinal() + input.getScroll()) >= 0 ? (currentAudioSetting.ordinal() + input.getScroll()) : (AudioButtons.values().length + (currentAudioSetting.ordinal() + input.getScroll()))) % AudioButtons.values().length];
+                            break;
+                    }
             }
-//            System.out.println(selectedIndex);
-//            if (sectionIndex == sections.length-1){
-//                exit = true;
-//            }
         }
 
     }
@@ -205,7 +286,8 @@ public class Settings extends Screen{
                         drawUtil.setColor(0, 150, 255);
                     }
                     drawUtil.drawRect(button.getRectangle());
-                    drawUtil.drawString(button.getRectangle().getX() + button.getRectangle().getWidth()/3, button.getRectangle().getY() + button.getRectangle().getHeight()/2, button.getName(), 20);
+                    drawUtil.drawString(button.getRectangle().getX() + button.getRectangle().getWidth()/5, button.getRectangle().getY() + button.getRectangle().getHeight()/2, button.getName(), 20);
+                    drawUtil.drawString(button.getRectangle().getX() + (button.getRectangle().getWidth()/5)*4, button.getRectangle().getY() + button.getRectangle().getHeight()/2, settingsManager.getSettingStringValue(button.getSetting().getId()), 20);
                 }
                 break;
             case AUDIO:
@@ -216,7 +298,8 @@ public class Settings extends Screen{
                         drawUtil.setColor(0, 150, 255);
                     }
                     drawUtil.drawRect(button.getRectangle());
-                    drawUtil.drawString(button.getRectangle().getX() + button.getRectangle().getWidth()/3, button.getRectangle().getY() + button.getRectangle().getHeight()/2, button.getName(), 20);
+                    drawUtil.drawString(button.getRectangle().getX() + button.getRectangle().getWidth()/5, button.getRectangle().getY() + button.getRectangle().getHeight()/2, button.getName(), 20);
+                    drawUtil.drawString(button.getRectangle().getX() + (button.getRectangle().getWidth()/5)*4, button.getRectangle().getY() + button.getRectangle().getHeight()/2, settingsManager.getSettingStringValue(button.getSetting().getId()), 20);
                 }
                 break;
         }
